@@ -1,0 +1,41 @@
+name: Daily Kindle Highlights
+
+on:
+  schedule:
+    # Runs every day at 7:00 AM UTC (adjust for your timezone)
+    # Warsaw is UTC+1 (or UTC+2 in summer), so 7:00 UTC = 8:00 or 9:00 local
+    - cron: "0 7 * * *"
+
+  # Allow manual trigger for testing
+  workflow_dispatch:
+
+jobs:
+  send-highlights:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+
+      - name: Send daily highlights email
+        env:
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          TO_EMAIL: ${{ secrets.TO_EMAIL }}
+          FROM_EMAIL: ${{ secrets.FROM_EMAIL }}
+          HIGHLIGHTS_COUNT: "5"
+        run: |
+          python src/main.py
+
+      - name: Log success
+        run: |
+          echo "✅ Daily highlights email sent successfully at $(date)"
