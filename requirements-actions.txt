@@ -1,0 +1,4 @@
+# Minimal dependencies for GitHub Actions (daily email only)
+# For local import with classification, use requirements.txt instead
+
+resend>=2.0.0

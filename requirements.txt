@@ -1,9 +1,9 @@
-# Kindle Daily Highlights - Dependencies
+# Kindle Daily Highlights - Local Development Dependencies
+# For GitHub Actions, use requirements-actions.txt instead (much smaller)
 
-# Required for sending emails (used by GitHub Actions)
 resend>=2.0.0
 
-# Required for local import/classification only (not needed in GitHub Actions)
-# These download a ~180MB model on first run
+# Required for local import/classification only
+# First run downloads ~180MB model, torch is ~2GB
 transformers>=4.36.0
 torch>=2.0.0
