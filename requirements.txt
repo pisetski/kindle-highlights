@@ -1,4 +1,9 @@
 # Kindle Daily Highlights - Dependencies
-# Minimal footprint for fast GitHub Actions execution
 
+# Required for sending emails (used by GitHub Actions)
 resend>=2.0.0
+
+# Required for local import/classification only (not needed in GitHub Actions)
+# These download a ~180MB model on first run
+transformers>=4.36.0
+torch>=2.0.0

@@ -22,6 +22,8 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
+from classifier import classify_book
+
 
 def parse_clippings(clippings_path: str) -> list[dict]:
     """
@@ -151,6 +153,35 @@ def deduplicate_highlights(existing: list[dict], new: list[dict]) -> tuple[list[
     return merged, added
 
 
+def classify_highlights(highlights: list[dict]) -> list[dict]:
+    """
+    Add theme classification to highlights that don't have one.
+    Classifies by book (title + author) to ensure consistency.
+    """
+    # Find unique books without themes
+    books_to_classify = set()
+    for h in highlights:
+        if 'theme' not in h:
+            books_to_classify.add((h['title'], h['author']))
+
+    if not books_to_classify:
+        return highlights
+
+    print(f"\n🤖 Classifying {len(books_to_classify)} books...")
+    book_themes = {}
+    for title, author in books_to_classify:
+        theme = classify_book(title, author)
+        book_themes[(title, author)] = theme
+        print(f"   • {title}: {theme}")
+
+    # Apply themes to all highlights without one
+    for h in highlights:
+        if 'theme' not in h:
+            h['theme'] = book_themes.get((h['title'], h['author']), "General")
+
+    return highlights
+
+
 def main():
     parser = argparse.ArgumentParser(
         description='Import Kindle highlights from My Clippings.txt',
@@ -225,6 +256,9 @@ Examples:
 
     # Merge and deduplicate
     merged, added = deduplicate_highlights(existing, highlights)
+
+    # Classify books into themes
+    merged = classify_highlights(merged)
 
     # Save
     os.makedirs(output_path.parent, exist_ok=True)

@@ -1,6 +1,6 @@
 # Kindle Daily Highlights
 
-Sends you random Kindle highlights every day via email. Self-hosted on GitHub Actions. 100% free.
+Sends you theme-based Kindle highlights every day via email. Each email focuses on a single theme (Philosophy, Psychology, Software Engineering, etc.) so you receive cohesive, related insights. Self-hosted on GitHub Actions. 100% free.
 
 ## Setup
 
@@ -12,21 +12,20 @@ Sends you random Kindle highlights every day via email. Self-hosted on GitHub Ac
 ### 2. Import Highlights
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/kindle-highlights.git
-cd kindle-highlights
-
 pip install -r requirements.txt
 
 # Preview first
 python src/import_clippings.py --dry-run ~/path/to/My\ Clippings.txt
 
-# Import
+# Import (first run downloads ~180MB AI model for classification)
 python src/import_clippings.py ~/path/to/My\ Clippings.txt
 
 git add data/highlights.json
 git commit -m "Add highlights"
 git push
 ```
+
+Books are automatically classified into themes during import using a local AI model.
 
 ### 3. Configure Secrets
 
@@ -53,7 +52,39 @@ git commit -m "Add new highlights"
 git push
 ```
 
-Duplicates are detected automatically.
+Duplicates are detected automatically. New books are classified into themes.
+
+## Customizing Themes
+
+Edit `src/classifier.py` to modify the theme list:
+
+```python
+THEMES = [
+    "Philosophy",
+    "Psychology",
+    "Finance & Investing",
+    "Software Engineering",
+    "Productivity",
+    "History",
+    "Science",
+    "Business",
+    "Fiction",
+    "Biography",
+    # Add your own:
+    "Spirituality",
+    "Health & Fitness",
+]
+```
+
+After changing themes, re-run the migration to reclassify all books:
+
+```bash
+# Remove existing themes first
+python -c "import json; d=json.load(open('data/highlights.json')); [h.pop('theme',None) for h in d]; json.dump(d,open('data/highlights.json','w'),indent=2)"
+
+# Reclassify
+python src/migrate_themes.py
+```
 
 ## Configuration
 

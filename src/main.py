@@ -124,9 +124,40 @@ def get_random_highlights(highlights: list[dict], count: int = 5) -> list[dict]:
     return selected
 
 
-def format_email_html(highlights: list[dict]) -> str:
+def get_themed_highlights(highlights: list[dict], count: int = 5) -> tuple[str, list[dict]]:
+    """
+    Select highlights from a randomly chosen theme.
+
+    Returns:
+        Tuple of (theme_name, selected_highlights)
+    """
+    # Group by theme
+    by_theme = {}
+    for h in highlights:
+        theme = h.get('theme', 'General')
+        by_theme.setdefault(theme, []).append(h)
+
+    # Pick viable themes (enough highlights, prefer non-General)
+    viable = [t for t, hs in by_theme.items() if len(hs) >= count and t != 'General']
+
+    if not viable:
+        # Fallback: use any theme with enough highlights
+        viable = [t for t, hs in by_theme.items() if len(hs) >= count]
+
+    if not viable:
+        # Last resort: use any theme with highlights
+        viable = [t for t, hs in by_theme.items() if len(hs) > 0]
+
+    chosen = random.choice(viable)
+    selected = get_random_highlights(by_theme[chosen], count)
+
+    return chosen, selected
+
+
+def format_email_html(highlights: list[dict], theme: str = None) -> str:
     """Format highlights as a beautiful HTML email."""
     date_str = datetime.now().strftime('%B %d, %Y')
+    title = f"📚 {theme} Highlights" if theme else "📚 Your Daily Highlights"
 
     html = f"""
 <!DOCTYPE html>
@@ -191,7 +222,7 @@ def format_email_html(highlights: list[dict]) -> str:
 </head>
 <body>
     <div class="header">
-        <h1>📚 Your Daily Highlights</h1>
+        <h1>{title}</h1>
         <p>{date_str}</p>
     </div>
 """
@@ -214,7 +245,7 @@ def format_email_html(highlights: list[dict]) -> str:
     return html
 
 
-def send_email(to_email: str, highlights: list[dict], from_email: str = None):
+def send_email(to_email: str, highlights: list[dict], theme: str = None, from_email: str = None):
     """Send highlights email via Resend."""
     resend.api_key = os.environ.get('RESEND_API_KEY')
 
@@ -225,13 +256,18 @@ def send_email(to_email: str, highlights: list[dict], from_email: str = None):
     if not from_email:
         from_email = "Kindle Highlights <onboarding@resend.dev>"
 
-    html_content = format_email_html(highlights)
+    html_content = format_email_html(highlights, theme)
     date_str = datetime.now().strftime('%B %d')
+
+    if theme:
+        subject = f"📚 {theme} Highlights - {date_str}"
+    else:
+        subject = f"📚 Your Daily Kindle Highlights - {date_str}"
 
     params = {
         "from": from_email,
         "to": [to_email],
-        "subject": f"📚 Your Daily Kindle Highlights - {date_str}",
+        "subject": subject,
         "html": html_content,
     }
 
@@ -263,12 +299,13 @@ def main():
     print(
         f"Loaded {len(highlights)} highlights from {len(set(h['title'] for h in highlights))} books")
 
-    # Select random highlights
-    selected = get_random_highlights(highlights, highlights_count)
-    print(f"Selected {len(selected)} random highlights")
+    # Select themed highlights
+    theme, selected = get_themed_highlights(highlights, highlights_count)
+    print(f"Selected theme: {theme}")
+    print(f"Selected {len(selected)} highlights from {len(set(h['title'] for h in selected))} books")
 
     # Send email
-    response = send_email(to_email, selected, from_email)
+    response = send_email(to_email, selected, theme, from_email)
     print(f"Email sent successfully! ID: {response.get('id', 'unknown')}")
 
 
