@@ -15,12 +15,16 @@ Sends you theme-based Kindle highlights every day via email. Each email focuses 
 pip install -r requirements.txt
 
 # Preview first
-python src/import_clippings.py --dry-run ~/path/to/My\ Clippings.txt
+python src/import_clippings.py --dry-run /Volumes/Kindle/documents/My\ Clippings.txt
 
 # Import (first run downloads ~180MB AI model for classification)
-python src/import_clippings.py ~/path/to/My\ Clippings.txt
+python src/import_clippings.py /Volumes/Kindle/documents/My\ Clippings.txt
 
-git add data/highlights.json
+# Encrypt highlights
+gpg --symmetric --cipher-algo AES256 data/highlights.json
+# Enter your passphrase when prompted
+
+git add data/highlights.json.gpg
 git commit -m "Add highlights"
 git push
 ```
@@ -46,8 +50,12 @@ The workflow runs daily at 7:00 AM UTC. Edit `.github/workflows/daily-highlights
 ## Adding New Highlights
 
 ```bash
-python src/import_clippings.py ~/path/to/My\ Clippings.txt
-git add data/highlights.json
+python src/import_clippings.py /Volumes/Kindle/documents/My\ Clippings.txt
+gpg --symmetric --cipher-algo AES256 data/highlights.json
+# Enter your passphrase when prompted
+
+git add data/highlights.json.gpg
+
 git commit -m "Add new highlights"
 git push
 ```

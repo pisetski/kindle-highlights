@@ -22,6 +22,5 @@ Thumbs.db
 .env
 *.local
 
-# Don't ignore the data directory, but keep a note
-# that highlights.json should be committed
-!data/
+# Data - only commit encrypted highlights
+data/highlights.json

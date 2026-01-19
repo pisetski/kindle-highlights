@@ -27,6 +27,13 @@ jobs:
         run: |
           pip install -r requirements-actions.txt
 
+      - name: Decrypt highlights
+        env:
+          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+        run: |
+          echo "$GPG_PASSPHRASE" | gpg --batch --yes --passphrase-fd 0 \
+            --decrypt data/highlights.json.gpg > data/highlights.json
+
       - name: Send daily highlights email
         env:
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
