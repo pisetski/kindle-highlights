@@ -1,6 +1,6 @@
 # Kindle Daily Highlights
 
-Sends you 5 random Kindle highlights every day via email. Self-hosted on GitHub Actions.
+Sends you random Kindle highlights every day via email. Self-hosted on GitHub Actions. 100% free.
 
 ## Setup
 
