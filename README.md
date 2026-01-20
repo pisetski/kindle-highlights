@@ -4,10 +4,7 @@ Sends you theme-based Kindle highlights every day via email. Each email focuses 
 
 ## Setup
 
-### 1. Get Your Kindle Highlights
-
-1. Connect Kindle to your computer via USB
-2. Copy `My Clippings.txt` from the `documents` folder
+### 1. Connect Kindle to your computer
 
 ### 2. Import Highlights
 
