@@ -102,4 +102,4 @@ python src/migrate_themes.py
 
 ## License
 
-MIT
+GPL-3.0 - See [LICENSE](LICENSE) for details.
