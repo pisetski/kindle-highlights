@@ -37,6 +37,7 @@ Go to **Settings → Secrets and variables → Actions** and add:
 | `RESEND_API_KEY` | API key from resend.com |
 | `TO_EMAIL` | Your email address |
 | `FROM_EMAIL` | Optional custom sender |
+| `GPG_PASSPHRASE` | Passphrase used to encrypt highlights.json |
 
 ### 4. Run
 
@@ -99,6 +100,7 @@ python src/migrate_themes.py
 | `TO_EMAIL` | Yes | - | Recipient email |
 | `FROM_EMAIL` | No | `onboarding@resend.dev` | Sender email |
 | `HIGHLIGHTS_COUNT` | No | 5 | Highlights per email |
+| `GPG_PASSPHRASE` | Yes | - | Passphrase to decrypt highlights |
 
 ## License
 
