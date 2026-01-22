@@ -26,7 +26,7 @@ git commit -m "Add highlights"
 git push
 ```
 
-Books are automatically classified into themes during import using a local AI model.
+Books are automatically classified into themes during import using a local AI model (`MoritzLaurer/deberta-v3-base-mnli-fever-anli`). For more accurate classification, consider using a cloud LLM.
 
 ### 3. Configure Secrets
 
