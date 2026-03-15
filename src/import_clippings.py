@@ -25,7 +25,7 @@ from pathlib import Path
 from classifier import classify_book
 
 
-def parse_clippings(clippings_path: str) -> list[dict]:
+def parse_clippings(clippings_path: str) -> tuple[list[dict], dict[str, int]]:
     """
     Parse Kindle's 'My Clippings.txt' file into structured highlights.
 
@@ -90,7 +90,7 @@ def parse_clippings(clippings_path: str) -> list[dict]:
             skipped['notes'] += 1
             continue
 
-        # Parse location if present
+        # Parse location if present for storage/backfill.
         location_match = re.search(
             r'location\s+(\d+)(?:-(\d+))?', metadata_line, re.IGNORECASE)
         location = None
@@ -133,22 +133,28 @@ def deduplicate_highlights(existing: list[dict], new: list[dict]) -> tuple[list[
     Merge new highlights with existing ones, avoiding duplicates.
     Returns merged list and count of new highlights added.
     """
-    # Create a set of existing highlight signatures
-    existing_signatures = set()
+    # Create a map of existing highlight signatures for dedupe and metadata backfill.
+    existing_by_signature = {}
     for h in existing:
         sig = (h['title'], h['text'][:100])  # Use first 100 chars of text
-        existing_signatures.add(sig)
+        existing_by_signature[sig] = h
 
     merged = existing.copy()
     added = 0
 
     for h in new:
         sig = (h['title'], h['text'][:100])
-        if sig not in existing_signatures:
+        existing_match = existing_by_signature.get(sig)
+        if existing_match is None:
             h['added_at'] = datetime.now().isoformat()
             merged.append(h)
-            existing_signatures.add(sig)
+            existing_by_signature[sig] = h
             added += 1
+        else:
+            if h.get('page') and not existing_match.get('page'):
+                existing_match['page'] = h['page']
+            if h.get('location') and not existing_match.get('location'):
+                existing_match['location'] = h['location']
 
     return merged, added
 
@@ -235,10 +241,8 @@ Examples:
         books[key] += 1
 
     print(f"\n📚 Books found ({len(books)}):")
-    for book, count in sorted(books.items(), key=lambda x: -x[1])[:10]:
+    for book, count in sorted(books.items(), key=lambda x: -x[1]):
         print(f"   • {book}: {count} highlights")
-    if len(books) > 10:
-        print(f"   ... and {len(books) - 10} more books")
 
     if args.dry_run:
         print("\n🔍 Dry run - no changes made.")

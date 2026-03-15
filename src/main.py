@@ -64,16 +64,24 @@ def parse_clippings(clippings_path: str) -> list[dict]:
         if 'Your Bookmark' in lines[1]:
             continue
 
+        metadata_line = lines[1].strip()
+
+        page_match = re.search(r'page\s+(\d+)', metadata_line, re.IGNORECASE)
+        page = page_match.group(1) if page_match else None
+
         # The actual highlight text (everything after the metadata line, excluding empty lines)
         highlight_text = '\n'.join(line for line in lines[3:] if line.strip())
 
         if highlight_text:
-            highlights.append({
+            highlight = {
                 'title': title,
                 'author': author,
                 'text': highlight_text,
                 'added_at': datetime.now().isoformat()
-            })
+            }
+            if page:
+                highlight['page'] = page
+            highlights.append(highlight)
 
     return highlights
 
