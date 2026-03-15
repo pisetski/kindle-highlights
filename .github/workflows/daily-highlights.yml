@@ -4,7 +4,7 @@ on:
   schedule:
     # Runs every day at 7:00 AM UTC (adjust for your timezone)
     # Warsaw is UTC+1 (or UTC+2 in summer), so 7:00 UTC = 8:00 or 9:00 local
-    - cron: "0 7 * * *"
+    - cron: "0 7 * * 2,3,5"
 
   # Allow manual trigger for testing
   workflow_dispatch:
