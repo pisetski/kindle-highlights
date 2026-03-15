@@ -8,11 +8,13 @@ License: MIT
 """
 
 import json
+import html as html_lib
 import os
 import random
 import re
 from datetime import datetime
 from pathlib import Path
+from typing import Any, Optional, cast
 
 import resend
 
@@ -154,98 +156,198 @@ def get_themed_highlights(highlights: list[dict], count: int = 5) -> tuple[str, 
     return chosen, selected
 
 
-def format_email_html(highlights: list[dict], theme: str = None) -> str:
-    """Format highlights as a beautiful HTML email."""
+def format_email_html(highlights: list[dict], theme: Optional[str] = None) -> str:
+    """Format highlights as a polished HTML email."""
     date_str = datetime.now().strftime('%B %d, %Y')
     title = f"📚 {theme} Highlights" if theme else "📚 Your Daily Highlights"
+    intro = (
+        f"A focused set of ideas from your {html_lib.escape(theme)} shelf, ready to skim and revisit."
+        if theme else
+        "A focused set of ideas from your library, ready to skim and revisit."
+    )
 
-    html = f"""
+    markup = f"""
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         body {{
             font-family: Georgia, 'Times New Roman', serif;
-            line-height: 1.6;
-            max-width: 600px;
             margin: 0 auto;
-            padding: 20px;
-            background-color: #fafafa;
-            color: #333;
+            padding: 24px 12px;
+            background-color: #f4efe6;
+            color: #1f2933;
+        }}
+        .container {{
+            max-width: 680px;
+            margin: 0 auto;
+            background: #fffdf8;
+            border: 1px solid #eadfce;
+            border-radius: 24px;
+            overflow: hidden;
         }}
         .header {{
-            text-align: center;
-            padding-bottom: 20px;
-            border-bottom: 2px solid #e0e0e0;
-            margin-bottom: 30px;
+            padding: 36px 32px 28px;
+            background: #fcf8f1;
+            border-bottom: 1px solid #eadfce;
+        }}
+        .eyebrow {{
+            display: inline-block;
+            margin-bottom: 14px;
+            padding: 7px 12px;
+            border-radius: 999px;
+            background: #f1dfcb;
+            color: #8b4e1f;
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
         }}
         .header h1 {{
-            font-size: 24px;
-            color: #2c3e50;
+            font-size: 32px;
+            line-height: 1.15;
+            color: #1d2a35;
             margin: 0;
         }}
         .header p {{
-            color: #7f8c8d;
-            margin: 5px 0 0 0;
-            font-size: 14px;
+            color: #4b5563;
+            margin: 12px 0 0 0;
+            font-size: 17px;
+            line-height: 1.7;
+        }}
+        .stats {{
+            margin-top: 22px;
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 13px;
+            font-weight: 600;
+            color: #5f6772;
+        }}
+        .stat {{
+            display: inline-block;
+            margin: 0 10px 8px 0;
+            padding: 8px 12px;
+            border: 1px solid #eadfce;
+            border-radius: 999px;
+            background: #ffffff;
+        }}
+        .content {{
+            padding: 28px 24px 12px;
         }}
         .highlight {{
-            background: white;
-            border-left: 4px solid #3498db;
-            padding: 20px;
-            margin-bottom: 25px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            background: #ffffff;
+            border: 1px solid #eadfce;
+            border-radius: 20px;
+            padding: 22px 22px 18px;
+            margin-bottom: 18px;
+        }}
+        .highlight-index {{
+            margin: 0 0 14px 0;
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: #a15d25;
         }}
         .highlight-text {{
-            font-size: 16px;
-            font-style: italic;
-            color: #2c3e50;
-            margin: 0 0 15px 0;
-        }}
-        .highlight-source {{
-            font-size: 13px;
-            color: #7f8c8d;
+            font-size: 22px;
+            line-height: 1.65;
+            color: #24303a;
             margin: 0;
         }}
+        .highlight-source {{
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 14px;
+            line-height: 1.6;
+            color: #6b7280;
+            margin: 18px 0 0 0;
+            padding-top: 16px;
+            border-top: 1px solid #eee4d3;
+        }}
         .highlight-source strong {{
-            color: #34495e;
+            color: #26333d;
         }}
         .footer {{
             text-align: center;
-            padding-top: 20px;
-            border-top: 1px solid #e0e0e0;
-            font-size: 12px;
-            color: #95a5a6;
+            padding: 20px 32px 30px;
+            border-top: 1px solid #eadfce;
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 13px;
+            line-height: 1.7;
+            color: #7b8088;
+            background: #fcf8f1;
+        }}
+        @media only screen and (max-width: 640px) {{
+            body {{
+                padding: 12px 8px;
+            }}
+            .header, .content, .footer {{
+                padding-left: 18px;
+                padding-right: 18px;
+            }}
+            .header h1 {{
+                font-size: 28px;
+            }}
+            .header p {{
+                font-size: 16px;
+            }}
+            .highlight {{
+                padding: 18px;
+                border-radius: 16px;
+            }}
+            .highlight-text {{
+                font-size: 20px;
+            }}
         }}
     </style>
 </head>
 <body>
-    <div class="header">
-        <h1>{title}</h1>
-        <p>{date_str}</p>
-    </div>
+    <div class="container">
+        <div class="header">
+            <div class="eyebrow">{html_lib.escape(theme) if theme else 'Daily Highlights'}</div>
+            <h1>{html_lib.escape(title)}</h1>
+            <p>{intro}</p>
+            <div class="stats">
+                <span class="stat">{date_str}</span>
+                <span class="stat">{len(highlights)} highlights</span>
+                <span class="stat">{len(set(h.get('title', 'Unknown') for h in highlights))} books</span>
+            </div>
+        </div>
+        <div class="content">
 """
 
-    for h in highlights:
-        html += f"""
+    for index, h in enumerate(highlights, start=1):
+        title_text = html_lib.escape(str(h.get('title', 'Unknown Title')))
+        author_text = html_lib.escape(str(h.get('author', 'Unknown Author')))
+        highlight_text = html_lib.escape(str(h.get('text', '')))
+        source_parts = [f"<strong>{title_text}</strong>", f"by {author_text}"]
+        if h.get('page'):
+            source_parts.append(f"Page {html_lib.escape(str(h['page']))}")
+
+        markup += f"""
     <div class="highlight">
-        <p class="highlight-text">"{h['text']}"</p>
-        <p class="highlight-source">— <strong>{h['title']}</strong> by {h['author']}</p>
+        <p class="highlight-index">Highlight {index:02d}</p>
+        <p class="highlight-text">&ldquo;{highlight_text}&rdquo;</p>
+        <p class="highlight-source">{' &middot; '.join(source_parts)}</p>
     </div>
 """
 
-    html += """
+    markup += """
+        </div>
     <div class="footer">
-        <p>Powered by your personal Kindle Highlights system</p>
+        <p>Sent from your personal Kindle Highlights system.</p>
+    </div>
     </div>
 </body>
 </html>
 """
-    return html
+    return markup
 
 
-def send_email(to_email: str, highlights: list[dict], theme: str = None, from_email: str = None):
+def send_email(to_email: str, highlights: list[dict], theme: Optional[str] = None, from_email: Optional[str] = None):
     """Send highlights email via Resend."""
     resend.api_key = os.environ.get('RESEND_API_KEY')
 
@@ -271,7 +373,7 @@ def send_email(to_email: str, highlights: list[dict], theme: str = None, from_em
         "html": html_content,
     }
 
-    response = resend.Emails.send(params)
+    response = resend.Emails.send(cast(Any, params))
     return response
 
 
