@@ -12,6 +12,8 @@ import html as html_lib
 import os
 import random
 import re
+import sys
+from argparse import ArgumentParser, Namespace
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Optional, cast
@@ -168,11 +170,6 @@ def format_email_html(highlights: list[dict], theme: Optional[str] = None) -> st
     """Format highlights as a polished HTML email."""
     date_str = datetime.now().strftime('%B %d, %Y')
     title = f"📚 {theme} Highlights" if theme else "📚 Your Daily Highlights"
-    intro = (
-        f"A focused set of ideas from your {html_lib.escape(theme)} shelf, ready to skim and revisit."
-        if theme else
-        "A focused set of ideas from your library, ready to skim and revisit."
-    )
 
     markup = f"""
 <!DOCTYPE html>
@@ -317,7 +314,6 @@ def format_email_html(highlights: list[dict], theme: Optional[str] = None) -> st
         <div class="header">
             <div class="eyebrow">{html_lib.escape(theme) if theme else 'Daily Highlights'}</div>
             <h1>{html_lib.escape(title)}</h1>
-            <p>{intro}</p>
             <div class="stats">
                 <span class="stat">{date_str}</span>
                 <span class="stat">{len(highlights)} highlights</span>
@@ -385,21 +381,19 @@ def send_email(to_email: str, highlights: list[dict], theme: Optional[str] = Non
     return response
 
 
-def main():
+def main(args: Optional[Namespace] = None):
     """Main entry point for the daily highlights job."""
-    # Configuration from environment
-    to_email = os.environ.get('TO_EMAIL')
-    from_email = os.environ.get('FROM_EMAIL')  # Optional
-    highlights_count = int(os.environ.get('HIGHLIGHTS_COUNT', '5'))
+    if args is None:
+        parser = _build_parser()
+        args = parser.parse_args()
 
-    if not to_email:
-        raise ValueError("TO_EMAIL environment variable is required")
+    to_email = args.to_email or os.environ.get('TO_EMAIL')
+    from_email = args.from_email or os.environ.get('FROM_EMAIL')
+    highlights_count = args.count or int(os.environ.get('HIGHLIGHTS_COUNT', '5'))
 
-    # Paths
     script_dir = Path(__file__).parent.parent
     data_path = script_dir / 'data' / 'highlights.json'
 
-    # Load highlights
     highlights = load_highlights(str(data_path))
 
     if not highlights:
@@ -409,15 +403,30 @@ def main():
     print(
         f"Loaded {len(highlights)} highlights from {len(set(h['title'] for h in highlights))} books")
 
-    # Select themed highlights
     theme, selected = get_themed_highlights(highlights, highlights_count)
     print(f"Selected theme: {theme}")
     print(f"Selected {len(selected)} highlights from {len(set(h['title'] for h in selected))} books")
 
-    # Send email
+    if args and args.preview:
+        html = format_email_html(selected, theme)
+        print(html)
+        return
+
+    if not to_email:
+        raise ValueError("TO_EMAIL environment variable is required")
+
     response = send_email(to_email, selected, theme, from_email)
     print(f"Email sent successfully! ID: {response.get('id', 'unknown')}")
 
 
+def _build_parser() -> ArgumentParser:
+    parser = ArgumentParser(description="Kindle Daily Highlights")
+    parser.add_argument('--preview', action='store_true', help='Print HTML email to stdout instead of sending')
+    parser.add_argument('--to-email', default=os.environ.get('TO_EMAIL'), help='Recipient email')
+    parser.add_argument('--from-email', default=os.environ.get('FROM_EMAIL'), help='Sender email')
+    parser.add_argument('--count', type=int, default=int(os.environ.get('HIGHLIGHTS_COUNT', '5')), help='Number of highlights')
+    return parser
+
+
 if __name__ == '__main__':
-    main()
+    main(_build_parser().parse_args())

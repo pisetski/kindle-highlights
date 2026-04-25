@@ -24,3 +24,5 @@ Thumbs.db
 
 # Data - only commit encrypted highlights
 data/highlights.json
+
+output.html
